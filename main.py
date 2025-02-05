@@ -1,7 +1,6 @@
 import argparse
 from dotenv import load_dotenv
 import os
-import json
 from src.data_loader import DataLoader
 from src.evaluator import Evaluator
 from src.result_parser import ResultParser

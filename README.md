@@ -46,7 +46,7 @@ This will generate 3 responses per conversation and consider it successful if an
 ### **4. Generating Detailed Raw Output**
 To save comprehensive evaluation details including all responses and judgments:
 ```bash
-python main.py --model-provider openai --attempts 3 --output-file results/evaluation_results.txt --raw results/detailed_results.txt
+python main.py --model-provider openai --attempts 3 --output-file results/evaluation_results.txt --raw results/detailed_results.csv
 ```
 
 ### **Command-Line Arguments**
