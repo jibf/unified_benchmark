@@ -12,11 +12,6 @@ class ResultParser:
         for result in self.evaluation_results:
             question_results[result['question_id']].append(result['passed'])  # Use 'passed' instead of checking verdict
 
-        # Count questions that pass in at least one attempt
-        total_passed = sum(1 for passes in question_results.values() if any(passes))
-        total_questions = len(question_results)
-        overall_score = (total_passed / total_questions) * 100 if total_questions > 0 else 0
-
         # Initialize axis_counts with a set for tracking counted questions
         axis_counts = defaultdict(lambda: {'passed': 0, 'total': 0, 'counted': set()})
         
@@ -34,12 +29,12 @@ class ResultParser:
                       if r['question_id'] == question_id and r['axis'] == axis):
                     axis_counts[axis]['passed'] += 1
 
+        axis_scores = {axis: (scores['passed'] / scores['total']) * 100 for axis, scores in axis_counts.items()}
+        overall_score = sum(axis_scores.values())/len(axis_scores.keys())
+
         return {
             "overall_score": overall_score,
-            "axis_scores": {
-                axis: (scores['passed'] / scores['total']) * 100 
-                for axis, scores in axis_counts.items()
-            }
+            "axis_scores": axis_scores
         }
     
     def save_raw_output(self, output_file: str, conversations: List, responses: Dict, attempts: int):

@@ -1,7 +1,7 @@
 # MultiChallenge: A Realistic Multi-Turn Conversation Evaluation Benchmark Challenging to Frontier LLMs
 MultiChallenge is a novel benchmark designed to evaluate large language models (LLMs) on their ability to handle multi-turn conversations with human users—an essential but underexplored capability for their real-world applications. MultiChallenge focuses on four key categories of challenges that are common, realistic, and highly demanding in current human-LLM interactions. These challenges require LLMs to excel simultaneously in accurate context allocation, in-context reasoning, and instruction-following.
 ## **Project Structure**
-- `data/` : Contains input files for conversations (input_conversations.jsonl) and optional model response files (model_responses.jsonl) used in the benchmark.
+- `data/` : Contains input files for conversations (benchmark_questions.jsonl) and optional model response files (in final_model_responses) used in the benchmark.
 - `results/` : Stores the benchmark's output, including evaluation scores and metrics, saved to evaluation_results.txt.
 - `src/` : Core functionality for the benchmark
   - `models/` : Houses model provider classes:
