@@ -64,6 +64,7 @@ Large Language Models (LLMs) have demonstrated significant potential in decision
 
 | Model                                 | normal | special | agent | overall |
 | ------------------------------------- | ------ | ------- | ----- | ------- |
+| **close-source model**                |
 | gpt-4o-2024-11-20                     | 0.927  | 0.933   | 0.715 | 0.896   |
 | gpt-4-turbo-2024-04-09                | 0.917  | 0.913   | 0.725 | 0.886   |
 | qwen-max                              | 0.887  | 0.740   | 0.685 | 0.817   |
@@ -74,6 +75,7 @@ Large Language Models (LLMs) have demonstrated significant potential in decision
 | gemini-1.5-pro                        | 0.822  | 0.800   | 0.250 | 0.728   |
 | o1-mini                               | 0.774  | 0.673   | 0.610 | 0.722   |
 | doubao-pro-32k                        | 0.750  | 0.593   | 0.235 | 0.628   |
+| **open-source model**                 |
 | Qwen2.5-Coder-32B-Instruct-local      | 0.908  | 0.813   | 0.715 | 0.853   |
 | Qwen2.5-32B-Instruct-local            | 0.852  | 0.747   | 0.690 | 0.799   |
 | Qwen2.5-72B-Instruct-local            | 0.873  | 0.773   | 0.525 | 0.793   |
@@ -142,7 +144,7 @@ To run inference with cmodels, use the `generate.py` script. This script support
 
 ```bash
 python generate.py  --model <model_name>  --model_path <model_path>  
---category <category> --language <language>
+--category <category> --language <language> 
 ```
 
 Arguments:
