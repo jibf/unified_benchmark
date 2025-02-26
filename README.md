@@ -42,7 +42,7 @@ Large Language Models (LLMs) have demonstrated significant potential in decision
 - The distribution of APIs across domains is visualized in the figure below:
 
 <p align="center">
-  <img src="./fig/api_domain.png" alt="API Domain Distribution" width="30%">
+  <img src="./fig/api_domain.png" alt="API Domain Distribution" width="60%">
 </p>
 
 ### **Data Composition**
@@ -54,7 +54,7 @@ Large Language Models (LLMs) have demonstrated significant potential in decision
 - The data composition is visualized below, showcasing the comprehensive coverage of tool-use capabilities:
 
 <p align="center">
-  <img src="./fig/data_composition.png" alt="Data Composition" width="20%">
+  <img src="./fig/data_composition.png" alt="Data Composition" width="50%">
 </p>
 
 <span id="leaderboard">
