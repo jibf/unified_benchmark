@@ -89,7 +89,7 @@ class FoodPlatform(BaseApi):
         self.logged_in = scenario.get("logged_in",True)
         self.logged_in_users = scenario.get("logged_in_users",[])
 
-    from typing import Dict, Union, List
+
 
     def login_food_platform(self, username: str, password: str) -> Dict[str, Union[bool, str]]:
         if self.wifi == False:

@@ -88,7 +88,7 @@ class FoodPlatform(BaseApi):
         self.logged_in = scenario.get("logged_in",True)
         self.logged_in_users = scenario.get("logged_in_users",[])
 
-       # 1. 用户登录功能
+       # 用户登录功能
     def login_food_platform(self, username: str, password: str) -> Dict[str, Union[bool, str]]:
         if self.wifi == False:
             return {"status": False, "message": "wifi未打开，无法登录"}
@@ -105,7 +105,7 @@ class FoodPlatform(BaseApi):
         self.logged_in_users.append(username)
         return {"status": True, "message": f"用户{username}登陆成功！"}
 
-    # 2. 查看已登录用户列表
+    # 查看已登录用户列表
     def view_logged_in_users(self) -> Dict[str, Union[bool, List[str]]]:
         """
         查看当前所有已登录的用户。
@@ -128,7 +128,7 @@ class FoodPlatform(BaseApi):
             return 0.0
 
 
-    # 4. 添加外卖订单
+    # 添加外卖订单
     def add_food_delivery_order(
         self, 
         username: str, 
@@ -211,7 +211,7 @@ class FoodPlatform(BaseApi):
         }
         
         
-    # 6. 查看订单
+    #  查看订单
     def view_orders(self, user_name: str) -> Dict[str, Union[bool, str, List[Dict[str, Union[str, int, float]]]]]:
         """
         查看用户的所有订单。
@@ -227,7 +227,7 @@ class FoodPlatform(BaseApi):
         
         return {"status": True, "orders": user_orders}
 
-    # 7. 搜索订单
+    # 搜索订单
     def search_orders(self, keyword: str) -> Dict[str, Union[bool, str, List[Dict[str, Union[str, float]]]]]:
         """
         根据关键词搜索订单。

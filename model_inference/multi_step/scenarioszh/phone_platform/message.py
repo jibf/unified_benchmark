@@ -99,7 +99,7 @@ class MessageApi(BaseApi):
         self.wifi = scenario.get("wifi", False)
         self.logged_in = scenario.get("logged_in",True)
 
-     # 1. 发送短信
+     # 发送短信
     def send_message(self, sender_name: str, receiver_name: str, message: str) -> Dict[str, Union[bool, str]]:
         """
         发送短信并添加到短信记录中。
@@ -137,7 +137,7 @@ class MessageApi(BaseApi):
 
         return {"status": True, "message": f"短信成功发送给{receiver_name}。"}
 
-    # 2. 删除短信
+    # 删除短信
     def delete_message(self, message_id: int) -> Dict[str, Union[bool, str]]:
         """
         删除指定的短信。
@@ -153,7 +153,7 @@ class MessageApi(BaseApi):
 
         del self.inbox[message_id]
         return {"status": True, "message": f"短信ID {message_id} 已成功删除。"}
-    # 其他功能方法...
+
 
     def view_messages_between_users(self, sender_name: str, receiver_name: str) -> Dict[str, Union[bool, str, List[Dict[str, str]]]]:
         """

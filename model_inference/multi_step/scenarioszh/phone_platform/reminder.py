@@ -69,7 +69,7 @@ class ReminderApi(BaseApi):
         return {"status": False, "message": f"没有找到标题为 '{title}' 的提醒"}
 
 
-    # 1. 添加提醒
+    # 添加提醒
     def add_reminder(self, title: str, description: str, time: datetime) -> Dict[str, Union[bool, str]]:
         """
         添加一个新的提醒。
@@ -97,7 +97,7 @@ class ReminderApi(BaseApi):
         }
         return {"status": True, "message": f"提醒 '{title}' 已成功添加"}
 
-    # 2. 删除提醒
+    # 删除提醒
     def delete_reminder(self, reminder_id: int) -> Dict[str, Union[bool, str]]:
         """
         删除指定的提醒。
@@ -114,7 +114,7 @@ class ReminderApi(BaseApi):
         del self.reminder_list[reminder_id]
         return {"status": True, "message": f"提醒ID {reminder_id} 已成功删除"}
 
-    # 3. 查看所有提醒
+    # 查看所有提醒
     def view_all_reminders(self) -> Dict[str, Union[bool, List[Dict[str, Union[str, datetime, bool]]]]]:
         """
         查看所有的提醒。
@@ -134,7 +134,7 @@ class ReminderApi(BaseApi):
             })
         return {"status": True, "reminders": reminders}
 
-    # 4. 标记提醒为已通知
+    # 标记提醒为已通知
     def mark_as_notified(self, reminder_id: int) -> Dict[str, Union[bool, str]]:
         """
         标记提醒为已通知。
@@ -149,7 +149,7 @@ class ReminderApi(BaseApi):
         self.reminder_list[reminder_id]["notified"] = True
         return {"status": True, "message": f"提醒ID {reminder_id} 已标记为已通知"}
 
-    # 6. 搜索提醒
+    # 搜索提醒
     def search_reminders(self, keyword: str) -> Dict[str, Union[bool, List[Dict[str, str]]]]:
         """
         根据关键词搜索提醒。
