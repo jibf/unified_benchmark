@@ -50,7 +50,8 @@ class LLMInfer(object):
 
     def inference(self, system_prompt, user_prompt):
         messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
-        question = [self._format_prompt(messages), ]
+        prompt = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        question = [prompt, ]
         outputs = self.llm.generate(question, self.sampling_params, use_tqdm=False)
         if len(question) == 1:
             result = outputs[0].outputs[0].text
