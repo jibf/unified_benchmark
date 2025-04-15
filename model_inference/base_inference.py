@@ -24,7 +24,7 @@ class BaseHandler:
             result = [result]
 
         for entry in result:
-            if "normal_multi_turn" not in entry:
+            if "normal_multi_turn" not in entry["id"]:
                 test_category = entry["id"].rsplit("_", 1)[0]
             else:
                 test_category = "_".join(entry["id"].split("_")[:-2])
