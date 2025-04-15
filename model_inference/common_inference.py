@@ -35,8 +35,14 @@ class CommonInference(BaseHandler):
         self.max_message_index = max_dialog_turns
         self.language = language
         self.user_model = user_model
+        self.tokenizer = self.initialize_tokenizer(model_path)
         self.model = get_model(model_name=model_name, model_path=model_path)
 
+    def initialize_tokenizer(self, model_path):
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+        return tokenizer
+      
     def inference(self, question, functions, time, profile, test_case, id):
         category = id.rsplit("_", 1)[0]
         if "multi_turn" in category and "agent" in category:
