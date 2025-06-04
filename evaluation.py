@@ -7,9 +7,6 @@ from methods.evaluate import evaluate
 
 sys.path.append(os.path.abspath(".."))
 
-os.environ["DEEPINFRA_API_KEY"] = "DEEPINFRA_KEY_REMOVED"
-os.environ["HUGGINGFACE_TOKEN"] = "hf_REMOVED_FROM_HISTORY"
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
