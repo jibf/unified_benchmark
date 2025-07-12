@@ -31,6 +31,8 @@ class LLMInfer(object):
         self.sampling_params = SamplingParams(
         temperature=0.0, max_tokens=1024, top_p=0.9
         )
+        from transformers import AutoTokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
         self.llm = LLM(model=model_path, dtype="float16", trust_remote_code=True, max_model_len=max_model_len, tensor_parallel_size=tensor_parallel_size,
                 gpu_memory_utilization=0.9)
 
