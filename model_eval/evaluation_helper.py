@@ -161,26 +161,26 @@ def generate_result_csv(leaderboard_table, output_path):
     data_close = []
     data_open = []
     for model_name, value in leaderboard_table.items():
-        unusal_lose = value.get("special_incomplete", {"accuracy": 0, "total_count": 0})
-        unusal_error = value.get("special_error_param", {"accuracy": 0, "total_count": 0})
-        unusal_exceeding = value.get("special_irrelevant", {"accuracy": 0, "total_count": 0})
+        unusal_lose = value.get("data_special_incomplete", {"accuracy": 0, "total_count": 0})
+        unusal_error = value.get("data_special_error_param", {"accuracy": 0, "total_count": 0})
+        unusal_exceeding = value.get("data_special_irrelevant", {"accuracy": 0, "total_count": 0})
 
-        atom_bool = value.get("normal_atom_bool", {"accuracy": 0, "total_count": 0})
-        atom_enum = value.get("normal_atom_enum", {"accuracy": 0, "total_count": 0})
-        atom_number = value.get("normal_atom_number", {"accuracy": 0, "total_count": 0})  # updated
-        atom_list = value.get("normal_atom_list", {"accuracy": 0, "total_count": 0})      # updated
-        atom_object_deep = value.get("normal_atom_object_deep", {"accuracy": 0, "total_count": 0})  # updated
-        atom_object_short = value.get("normal_atom_object_short", {"accuracy": 0, "total_count": 0})  # updated
+        atom_bool = value.get("data_normal_atom_bool", {"accuracy": 0, "total_count": 0})
+        atom_enum = value.get("data_normal_atom_enum", {"accuracy": 0, "total_count": 0})
+        atom_number = value.get("data_normal_atom_number", {"accuracy": 0, "total_count": 0})  # updated
+        atom_list = value.get("data_normal_atom_list", {"accuracy": 0, "total_count": 0})      # updated
+        atom_object_deep = value.get("data_normal_atom_object_deep", {"accuracy": 0, "total_count": 0})  # updated
+        atom_object_short = value.get("data_normal_atom_object_short", {"accuracy": 0, "total_count": 0})  # updated
 
-        normal_ss = value.get("normal_single_turn_single_function", {"accuracy": 0, "total_count": 0})  # updated
-        normal_sp = value.get("normal_single_turn_parallel_function", {"accuracy": 0, "total_count": 0})  # updated
-        normal_ms = value.get("normal_multi_turn_user_switch", {"accuracy": 0, "total_count": 0})  # updated
-        normal_ma = value.get("normal_multi_turn_user_adjust", {"accuracy": 0, "total_count": 0})  # updated
-        normal_similar = value.get("normal_similar_api", {"accuracy": 0, "total_count": 0})  # updated
-        normal_profile = value.get("normal_preference", {"accuracy": 0, "total_count": 0})  # updated
+        normal_ss = value.get("data_normal_single_turn_single_function", {"accuracy": 0, "total_count": 0})  # updated
+        normal_sp = value.get("data_normal_single_turn_parallel_function", {"accuracy": 0, "total_count": 0})  # updated
+        normal_ms = value.get("data_normal_multi_turn_user_switch", {"accuracy": 0, "total_count": 0})  # updated
+        normal_ma = value.get("data_normal_multi_turn_user_adjust", {"accuracy": 0, "total_count": 0})  # updated
+        normal_similar = value.get("data_normal_similar_api", {"accuracy": 0, "total_count": 0})  # updated
+        normal_profile = value.get("data_normal_preference", {"accuracy": 0, "total_count": 0})  # updated
 
-        agent_turn = value.get("agent_multi_turn", {"accuracy": 0, "process_accuracy": 0, "total_count": 0})
-        agent_step = value.get("agent_multi_step", {"accuracy": 0, "process_accuracy": 0, "total_count": 0})
+        agent_turn = value.get("data_agent_multi_turn", {"accuracy": 0, "process_accuracy": 0, "total_count": 0})
+        agent_step = value.get("data_agent_multi_step", {"accuracy": 0, "process_accuracy": 0, "total_count": 0})
         
         special_total = calculate_unweighted_accuracy(
             [unusal_lose, unusal_error, unusal_exceeding]
