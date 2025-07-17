@@ -32,7 +32,7 @@ tool: 提供工具调用的返回结果
 API说明：
 {function}"""
 
-SYSTEM_PROMPT_FOR_SPECIAL_DATA_ZH = """你是一个AI系统，你的角色为system，请根据给定的API说明和对话历史1..t，为角色system生成在步骤t+1中应该调用的API请求。下面是两种具体情况：
+SYSTEM_PROMPT_FOR_SPECIAL_DATA_ZH = """你是一个AI系统，你的角色为assistant，请根据给定的API说明和对话历史1..t，为角色assistant生成在步骤t+1中应该调用的API请求。下面是两种具体情况：
 1 当用户提供的信息清晰明确并且问题能通过候选函数列表解决时：
 如果API参数描述未指定取值格式要求，则该参数取值使用用户原文。
 当候选工具中有多个工具都能满足用户需求时，需要将所有API请求都输出。
@@ -48,7 +48,7 @@ API请求以[ApiName(key1='value1', key2='value2', ...), ApiName(key1='value1', 
 
 角色说明：
 user: 用户
-system: 进行API请求调用的AI系统角色
+assistant: 进行API请求调用的AI助手角色
 
 API说明：
 {function}"""
