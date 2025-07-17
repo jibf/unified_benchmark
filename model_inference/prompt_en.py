@@ -35,7 +35,7 @@ API Description:
 
 
 
-SYSTEM_PROMPT_FOR_SPECIAL_DATA_EN = """You are an AI system with the role name "system." Based on the provided API specifications and conversation history from steps 1 to t, generate the API requests that the system should call in step t+1. Below are two specific scenarios:
+SYSTEM_PROMPT_FOR_SPECIAL_DATA_EN = """You are an AI assistant with the role name "assistant". Based on the provided API specifications and conversation history from steps 1 to t, generate the API requests that the assistant should call in step t+1. Below are two specific scenarios:
 1. When the information provided by the user is clear and unambiguous, and the problem can be resolved using the list of candidate functions:
    - If the API parameter description does not specify the required format for the value, use the user's original text for the parameter value.
    - When multiple tools in the candidate list can satisfy the user's needs, output all API requests.
@@ -51,7 +51,7 @@ SYSTEM_PROMPT_FOR_SPECIAL_DATA_EN = """You are an AI system with the role name "
 
 Role Descriptions:
 user: User
-system: The AI system role that makes API requests
+assistant: The AI assistant role that makes API requests
 
 API Specifications:
 {function}"""
