@@ -12,3 +12,4 @@ test.py
 ./data_all/data_zh/dialogue_history
 *.env
 !.env.template
+# leaderboard/

@@ -2,6 +2,7 @@
 
 <p align="center">
   <a href="https://arxiv.org/abs/2501.12851">📃 论文 </a>
+  <b>&nbsp;·&nbsp;</b> <a href="./leaderboard/index.html">🏆 榜单(持续更新中)</a>
 </p>
 
 ## 📚 内容
