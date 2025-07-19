@@ -2,6 +2,7 @@
 
 <p align="center">
   <a href="https://arxiv.org/abs/2501.12851">📃 Paper </a>
+  <b>&nbsp;·&nbsp;</b> <a href="./leaderboard/index.html">🏆 Leaderboard</a>
 </p>
 
 English | [中文](README_CN.md)
