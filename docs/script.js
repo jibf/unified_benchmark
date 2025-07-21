@@ -7,7 +7,7 @@
 const allCombinedModels = [
   // Closed-Source Large Language Models
   { category: "closed", model: "GPT-4o", atom: 93.4, single: 84.5, multi: 77.0, api: 85.0, pref: 83.0, summary: 87.6, special: 93.0, agent: 63.8, overall: 85.4 },
-  { category: "closed", model: "gemini-2.5-pro-05-06", atom: 87.5, single: 78.2, multi: 70.0, api: 78.0, pref: 69.0, summary: 80.7, special: 90.0, agent: 63.8, overall: 80.6 },
+  { category: "closed", model: "Gemini-2.5-Pro-05-06", atom: 87.5, single: 78.2, multi: 70.0, api: 78.0, pref: 69.0, summary: 80.7, special: 90.0, agent: 63.8, overall: 80.6 },
   { category: "closed", model: "Qwen-Max", atom: 91.2, single: 80.5, multi: 68.0, api: 83.0, pref: 83.0, summary: 84.2, special: 74.0, agent: 64.3, overall: 78.4 },
   { category: "closed", model: "GPT-4o-Mini", atom: 86.5, single: 76.0, multi: 66.5, api: 77.0, pref: 78.0, summary: 79.9, special: 79.0, agent: 33.3, overall: 72.5 },
   { category: "closed", model: "Gemini-1.5-Pro", atom: 84.5, single: 76.8, multi: 64.5, api: 80.0, pref: 78.0, summary: 79.0, special: 78.7, agent: 25.5, overall: 70.7 },
@@ -15,7 +15,7 @@ const allCombinedModels = [
   { category: "closed", model: "Doubao-Pro-32K", atom: 79.8, single: 55.5, multi: 58.0, api: 76.0, pref: 66.0, summary: 70.7, special: 55.0, agent: 25.0, overall: 59.4 },
 
   // Open-Source Large Language Models
-  { category: "open", model: "kimi-k2-0711", atom: 89.2, single: 83.0, multi: 72.5, api: 75.0, pref: 80.0, summary: 83.4, special: 84.0, agent: 74.2, overall: 82.2 },
+  { category: "open", model: "Kimi-k2-0711", atom: 89.2, single: 83.0, multi: 72.5, api: 75.0, pref: 80.0, summary: 83.4, special: 84.0, agent: 74.2, overall: 82.2 },
   { category: "open", model: "Qwen2.5-Coder-32B-Instruct", atom: 90.2, single: 81.0, multi: 71.0, api: 83.0, pref: 81.0, summary: 84.1, special: 80.7, agent: 60.8, overall: 79.6 },
   { category: "open", model: "DeepSeekV3", atom: 91.5, single: 84.0, multi: 77.0, api: 83.0, pref: 83.0, summary: 86.5, special: 73.0, agent: 34.5, overall: 74.8 },
   { category: "open", model: "Qwen2.5-72B-Instruct", atom: 86.8, single: 80.3, multi: 69.5, api: 83.0, pref: 81.0, summary: 82.1, special: 75.7, agent: 45.0, overall: 74.7 },
@@ -44,7 +44,7 @@ const allCombinedModels = [
 const allChineseModels = [
   // Closed-Source Large Language Models
   { category: "closed", model: "GPT-4o", atom: 96.7, single: 91.0, multi: 86.0, api: 90.0, pref: 88.0, summary: 92.7, special: 93.3, agent: 71.5, overall: 89.6 },
-  { category: "closed", model: "gemini-2.5-pro-05-06", atom: 91.3, single: 83.0, multi: 79.0, api: 84.0, pref: 80.0, summary: 86.3, special: 89.3, agent: 75.0, overall: 85.4 },
+  { category: "closed", model: "Gemini-2.5-Pro-05-06", atom: 91.3, single: 83.0, multi: 79.0, api: 84.0, pref: 80.0, summary: 86.3, special: 89.3, agent: 75.0, overall: 85.4 },
   { category: "closed", model: "Qwen-Max", atom: 94.3, single: 86.0, multi: 75.0, api: 92.0, pref: 84.0, summary: 88.7, special: 74.0, agent: 68.5, overall: 81.7 },
   { category: "closed", model: "GPT-4o-Mini", atom: 88.7, single: 78.5, multi: 74.0, api: 80.0, pref: 84.0, summary: 83.4, special: 81.3, agent: 39.0, overall: 76.0 },
   { category: "closed", model: "Claude-3-5-Sonnet", atom: 87.0, single: 81.0, multi: 79.0, api: 84.0, pref: 76.0, summary: 83.5, special: 82.0, agent: 35.0, overall: 75.6 },
@@ -52,7 +52,7 @@ const allChineseModels = [
   { category: "closed", model: "Doubao-Pro-32K", atom: 84.3, single: 53.0, multi: 64.0, api: 82.0, pref: 78.0, summary: 75.0, special: 59.3, agent: 23.5, overall: 62.8 },
 
   // Open-Source Large Language Models
-  { category: "open", model: "kimi-k2-0711", atom: 91.3, single: 87.5, multi: 83.0, api: 80.0, pref: 86.0, summary: 87.9, special: 86.7, agent: 83.4, overall: 86.9 },
+  { category: "open", model: "Kimi-k2-0711", atom: 91.3, single: 87.5, multi: 83.0, api: 80.0, pref: 86.0, summary: 87.9, special: 86.7, agent: 83.4, overall: 86.9 },
   { category: "open", model: "Qwen2.5-Coder-32B-Instruct", atom: 94.3, single: 88.5, multi: 83.0, api: 90.0, pref: 90.0, summary: 90.8, special: 81.3, agent: 71.5, overall: 85.3 },
   { category: "open", model: "Qwen2.5-72B-Instruct", atom: 92.3, single: 86.0, multi: 75.0, api: 90.0, pref: 82.0, summary: 87.3, special: 77.3, agent: 52.5, overall: 79.3 },
   { category: "open", model: "DeepSeekV3", atom: 95.0, single: 90.5, multi: 91.0, api: 90.0, pref: 88.0, summary: 92.6, special: 73.3, agent: 35.0, overall: 78.5 },
@@ -72,7 +72,7 @@ const allChineseModels = [
 const allEnglishModels = [
   // Closed-Source Large Language Models
   { category: "closed", model: "GPT-4o", atom: 90.0, single: 78.0, multi: 68.0, api: 80.0, pref: 78.0, summary: 82.5, special: 92.7, agent: 56.0, overall: 81.1 },
-  { category: "closed", model: "gemini-2.5-pro-05-06", atom: 83.7, single: 73.5, multi: 61.0, api: 72.0, pref: 58.0, summary: 75.1, special: 90.7, agent: 52.5, overall: 75.8 },
+  { category: "closed", model: "Gemini-2.5-Pro-05-06", atom: 83.7, single: 73.5, multi: 61.0, api: 72.0, pref: 58.0, summary: 75.1, special: 90.7, agent: 52.5, overall: 75.8 },
   { category: "closed", model: "Qwen-Max", atom: 88.0, single: 75.0, multi: 61.0, api: 74.0, pref: 82.0, summary: 79.7, special: 74.0, agent: 60.0, overall: 75.1 },
   { category: "closed", model: "GPT-4o-Mini", atom: 84.3, single: 73.5, multi: 59.0, api: 74.0, pref: 72.0, summary: 76.4, special: 76.7, agent: 27.5, overall: 68.9 },
   { category: "closed", model: "Gemini-1.5-Pro", atom: 82.3, single: 73.0, multi: 61.0, api: 74.0, pref: 72.0, summary: 75.7, special: 77.3, agent: 26.0, overall: 68.5 },
@@ -80,7 +80,7 @@ const allEnglishModels = [
   { category: "closed", model: "Doubao-Pro-32K", atom: 75.3, single: 58.0, multi: 52.0, api: 70.0, pref: 54.0, summary: 66.3, special: 50.7, agent: 26.5, overall: 56.0 },
 
   // Open-Source Large Language Models
-  { category: "open", model: "kimi-k2-0711-preview", atom: 87.0, single: 78.5, multi: 62.0, api: 70.0, pref: 74.0, summary: 78.9, special: 81.3, agent: 65.0, overall: 77.4 },
+  { category: "open", model: "Kimi-k2-0711", atom: 87.0, single: 78.5, multi: 62.0, api: 70.0, pref: 74.0, summary: 78.9, special: 81.3, agent: 65.0, overall: 77.4 },
   { category: "open", model: "Qwen2.5-Coder-32B-Instruct", atom: 86.0, single: 73.5, multi: 59.0, api: 76.0, pref: 72.0, summary: 77.4, special: 80.0, agent: 50.0, overall: 73.9 },
   { category: "open", model: "DeepSeekV3", atom: 88.0, single: 77.5, multi: 63.0, api: 76.0, pref: 78.0, summary: 80.3, special: 72.7, agent: 34.0, overall: 71.1 },
   { category: "open", model: "Qwen2.5-72B-Instruct", atom: 81.3, single: 74.5, multi: 64.0, api: 76.0, pref: 80.0, summary: 76.8, special: 74.0, agent: 37.5, overall: 70.0 },
