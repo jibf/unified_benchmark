@@ -50,6 +50,7 @@ inference_map_groups = {
         "Hammer2.1-3b-local",
         "Qwen2.5-3B-Instruct-local",
         "Llama-3.2-3B-Instruct-local",
+        "moonshotai/Kimi-K2-Instruct",
     ],
 }
 
