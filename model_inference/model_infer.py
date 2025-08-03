@@ -143,6 +143,31 @@ class Gemini(object):
         result = self.request_gemini(system_prompt=system_prompt, messages=messages)
         return result
 
+class Kimi(object):
+    def __init__(self, model_name, model_path=None, temperature=0.001, top_p=1, max_tokens=1000, language="zh") -> None:
+        api_key = os.getenv("KIMI_API_KEY")
+        base_url = "https://api.moonshot.cn/v1"
+        self.model_name = model_name
+        self.client = OpenAI(api_key=api_key, timeout=1000, max_retries=1, base_url=base_url)
+
+    def creat_message(self, system_prompt=None, user_prompt=None):
+        messages = []
+        if system_prompt:
+            messages = [{"role": "system", "content": system_prompt}]
+        if user_prompt:
+            messages.append({"role": "user", "content": user_prompt})
+        return messages
+
+    def inference(self, system_prompt, user_prompt):
+        messages = self.creat_message(system_prompt=system_prompt, user_prompt=user_prompt)
+        response = self.client.chat.completions.create(  
+            model = self.model_name,
+            messages=messages,
+            max_tokens=1024,
+            temperature=0.0
+        )
+        return response.choices[0].message.content
+
 
 model_dict = {}
 def get_model(model_name, model_path):
@@ -159,6 +184,8 @@ def get_model(model_name, model_path):
             model = Deepseek(model_name)
         elif "gemini" in model_name_lower:
             model = Gemini(model_name)
+        elif "kimi" in model_name_lower:
+            model = Kimi(model_name)
         elif model_path:
             model = Llama(model_path)
         else:
