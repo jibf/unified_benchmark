@@ -44,7 +44,7 @@ MULTI_TURN_AGENT_PROMPT_USER_EN = """Below is the list of APIs you can use:\n {f
 class APIAgent_turn():
 
     def __init__(self, model_name, time, functions, involved_class, temperature=0.001, top_p=1, max_tokens=1000, language="zh") -> None:
-        self.model_name = model_name  
+        self.model_name = model_name.lower()
         
         if "gpt" in self.model_name:
             api_key = os.getenv("GPT_AGENT_API_KEY")
@@ -55,6 +55,9 @@ class APIAgent_turn():
         elif "qwen" in self.model_name:
             api_key = os.getenv("QWEN_API_KEY")
             base_url = os.getenv("QWEN_BASE_URL")
+        elif "kimi" in self.model_name:
+            api_key = os.getenv("KIMI_API_KEY")
+            base_url = os.getenv("KIMI_BASE_URL")
         else:
             raise ValueError(f"Unknown model name: {self.model_name}")
 

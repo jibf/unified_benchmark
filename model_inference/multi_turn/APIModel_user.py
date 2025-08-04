@@ -78,7 +78,7 @@ class APIUSER():
 
     def __init__(self, model_name, involved_class, temperature=0.001, top_p=1, max_tokens=1000, language="zh") -> None:
         
-        self.model_name = model_name
+        self.model_name = model_name.lower()
         if "gpt" in self.model_name:
             api_key = os.getenv("GPT_API_KEY")
             base_url = os.getenv("GPT_BASE_URL")
@@ -88,6 +88,11 @@ class APIUSER():
         elif "qwen" in self.model_name:
             api_key = os.getenv("QWEN_API_KEY")
             base_url = os.getenv("QWEN_BASE_URL")
+        elif "kimi" in self.model_name:
+            api_key = os.getenv("KIMI_API_KEY")
+            base_url = os.getenv("KIMI_BASE_URL")
+        else:
+            raise ValueError(f"Unknown model name: {self.model_name}")
             
         self.client = OpenAI(base_url=base_url, api_key=api_key)
         self.model_name = model_name
