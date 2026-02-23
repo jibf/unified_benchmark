@@ -1,4 +1,5 @@
 import re
+import os
 import litellm
 from litellm import completion
 from typing import List, Dict, Any
@@ -30,18 +31,28 @@ class Drafter_agent:
                     temperature=self.temperature,
                 )
             else:
-                client = OpenAI( 
+                # Use unified API_KEY environment variable
+                api_key = os.getenv("API_KEY")
+
+                client = OpenAI(
+                    api_key=api_key,
                     base_url=self.vllm_url  # litellm-proxy-base url
                 )
-
-                res = client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    max_tokens=2500,
-                    temperature=self.temperature
-                )
+                kwargs = {
+                    "model": self.model,
+                    "messages": messages,
+                    "temperature": self.temperature,
+                    "max_tokens": 16384,
+                    "timeout": None,
+                }
+                if self.model in ["openai/gpt-5"]:
+                    kwargs.pop("max_tokens")
+                    kwargs["temperature"] = 1.0
+                elif self.model in ["anthropic/claude-4-sonnet-thinking-on-10k", "anthropic/claude-4-opus-thinking-on-10k"]:
+                    kwargs["temperature"] = 1.0
+                res = client.chat.completions.create(**kwargs)
             response = res.choices[0].message.content
             code_search = re.search(r"`python\s*([^`]+)`", response)
             generated_code = code_search.group(1) if code_search else None
             trail += 1
-        return generated_code if generated_code else "Fail to generate code"
+        return generated_code if generated_code else "Fail to generate code.\n" + response
