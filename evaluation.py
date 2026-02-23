@@ -5,48 +5,34 @@ import argparse
 import os
 import logging
 import datetime
+import sys
 from collections import defaultdict
 import multiprocessing
-from multiprocessing import Pool, Manager
+from multiprocessing import Pool
 from functools import partial
+from tqdm import tqdm
+from dotenv import load_dotenv
 
 from utils.logger import Logger
 from utils.utils import *
 
 from runner.gpt_runner import GPTRunner
-from runner.glm_runner import GLMRunner, GLMAPIRunner
-from runner.claude_runner import ClaudeRunner
-from runner.qwen_runner import QwenRunner
-from runner.llama_runner import LlamaRunner
-from runner.mistral_runner import MistralRunner
 from runner.response_runner import RespEvalRunner
 
-MODEL_MAPPING = {
-    "gpt-4o-2024-08-06": GPTRunner,
-    "gpt-4-turbo-2024-04-09": GPTRunner,
-    "claude-3-5-sonnet-20240620": ClaudeRunner,
-    "claude-3-5-sonnet-20241022": ClaudeRunner,
-    "claude-3-5-haiku-20241022": ClaudeRunner,
-    "glm-4-9b-chat": GLMRunner,
-    "glm-4-long": GLMAPIRunner,
-    "Llama-3.1-70B": LlamaRunner,
-    "Llama-3.1-8B": LlamaRunner,
-    "Meta-Llama-3.1-405B-Instruct-FP8": LlamaRunner,
-    "qwen2.5-7b-instruct": QwenRunner,
-    "qwen2.5-72b-instruct": QwenRunner,
-    "qwen2.5-7b-instruct": QwenRunner,
-    "mistral-large-2407": MistralRunner,
-}
+
+load_dotenv()
+
 
 
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", type=str, default="logs/test.log")
     parser.add_argument("--input_file", type=str, default="data/ComplexFuncBench.jsonl")
-    parser.add_argument("--model_name", type=str, required=True, choices=list(MODEL_MAPPING.keys()), help="The name of the model to be evaluated.")
+    parser.add_argument("--model_name", type=str, required=True, help="The name of the model to be evaluated.")
     parser.add_argument('--exp_name', type=str, default='full-1000')
-    parser.add_argument("--vllm_url", type=str)
+    parser.add_argument("--vllm_url", type=str, default=os.environ['BASE_URL'])
     parser.add_argument("--proc_num", type=int, default=1)
+    parser.add_argument("--eval_model", type=str, default="openai/gpt-4o-20240806", help="The evaluation model for response evaluation (default: openai/gpt-4o-20240806)")
     parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
@@ -64,7 +50,7 @@ def process_example(data, args):
     log_dir = f"{args.log_dir}/{data['id']}.log"
     logger = Logger(f"evaluation_logger_{data['id']}", log_dir, logging.DEBUG)
 
-    model = MODEL_MAPPING[args.model_name](args=args, logger=logger)
+    model = GPTRunner(args=args, logger=logger)
     resp_eval_model = RespEvalRunner(args=args, logger=logger)
 
     logger.info(f"Test Example {data['id']}")
@@ -78,9 +64,14 @@ def process_example(data, args):
 
     convs, message, turn_id, correct_count = model.run(data)
 
-    # API Error
-    if isinstance(message, dict) and message["error_type"] == "unknown_error":
-        return None
+    # Handle API errors
+    if isinstance(message, dict):
+        if message["error_type"] == "unknown_error":
+            print(f"\nError in sample {data['id']}: {message['content']}", file=sys.stderr)
+            return None
+        elif message["error_type"] == "context_length_exceeded":
+            print(f"\nContext length exceeded in sample {data['id']}: {message['content']}", file=sys.stderr)
+            # Continue processing to save partial results instead of returning None
     
     real_turn_count = 0
     for turn in convs:
@@ -120,24 +111,39 @@ def process_example(data, args):
 
 def main():
     args = get_args()
+
+    # Check and warn about eval_model
+    eval_model = args.eval_model
+    normalized_model = eval_model.split('/')[-1].replace('-', '').lower()
+    expected_normalized = "gpt4o20240806"
+
+    if normalized_model != expected_normalized:
+        warning_msg = [
+            "=" * 80,
+            "WARNING: UNSUPPORTED EVALUATION MODEL DETECTED!",
+            f"Current eval_model: '{eval_model}'",
+            f"Official supported model: 'gpt-4o-2024-08-06'",
+            "Using a different model may lead to UNRELIABLE evaluation results!",
+            "=" * 80
+        ]
+        print("\n" + "\n".join(warning_msg) + "\n", flush=True)
+
     test_data = load_json(args.input_file)
     if args.debug:
         test_data = random.sample(test_data, 10)
-    
+
     if os.path.exists(args.output_dir):
         finished_data = load_json(args.output_dir)
         finised_ids = [d["id"] for d in finished_data]
     else:
         finised_ids = []
     test_data = [d for d in test_data if d['id'] not in finised_ids]
-            
-    with Manager() as manager:
-        pool = Pool(processes=args.proc_num)
-        process_example_partial = partial(process_example)
-        results = pool.starmap(process_example_partial, [(data, args) for data in test_data])
-        
-    pool.close()
-    pool.join()
+    
+    process_example_partial = partial(process_example, args=args)
+    with Pool(processes=args.proc_num) as pool:
+        with tqdm(total=len(test_data), desc="Processing samples", unit="sample") as pbar:
+            for _ in pool.imap_unordered(process_example_partial, test_data):
+                pbar.update(1)
 
 
 if __name__ == '__main__':

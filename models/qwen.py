@@ -3,6 +3,9 @@ import copy
 from typing import Any, Dict
 from utils.utils import *
 from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 """
 You can also deploy Qwen2.5 via vLLM, please enable the auto-tool-choice. 
@@ -18,8 +21,9 @@ class QwenModel:
         self.model_name = model_name
         self.messages = []
         self.client = OpenAI(
-            api_key=os.getenv("Qwen_aliyuncs_KEY"), 
-            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1")
+            api_key=os.getenv("API_KEY"),
+            base_url=os.getenv("BASE_URL")
+        )
 
     @retry(max_attempts=5, delay=20)
     def __call__(self, messages, tools=None, **kwargs: Any):

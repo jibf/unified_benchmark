@@ -4,9 +4,12 @@ import gc
 import random
 import torch
 import numpy as np
-import numpy as np
+import warnings
 from FlagEmbedding import FlagModel
 from scipy.optimize import linear_sum_assignment
+
+# Suppress tokenizer warnings
+warnings.filterwarnings("ignore", message=".*fast tokenizer.*")
 
 from utils.utils import *
 from utils.rapidapi import RapidAPICall
@@ -18,13 +21,13 @@ class CompareFCBase:
     def __init__(self, args, logger) -> None:
         self.embedding = FlagModel('BAAI/bge-large-en-v1.5', 
                         query_instruction_for_retrieval="Represent this sentence for searching relevant passages:",
-                        use_fp16=True)
+                        use_fp16=True, devices='cpu')
 
         with open("utils/tool_info.json", 'r') as f:
             tool_info = json.load(f)
         tool_info = tool_info['booking-com15']
         self.api_call = RapidAPICall(tool="booking-com15", tool_info=tool_info)
-        self.model = GPTModel("gpt-4o-2024-05-13")
+        self.model = GPTModel("openai/gpt-4o-20240806")
         self.logger = logger
         self.error_message = []
         self.exact_match_dict = load_json("utils/exact_match_values.json")

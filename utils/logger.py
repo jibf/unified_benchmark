@@ -2,31 +2,30 @@ import logging
 
 
 class Logger:
-    def __init__(self, name='my_logger', log_file='test.log', level=logging.INFO):
+    def __init__(self, name='my_logger', log_file='test.log', level=logging.INFO, console_output=False):
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
         
         # Create handlers
         self.file_handler = logging.FileHandler(log_file)
-        self.console_handler = logging.StreamHandler()
         
         # Configure file handler
         self.file_handler.setLevel(level)
-        
-        # Configure console handler
-        self.console_handler.setLevel(level)
         
         # Create a logging format
         self.formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         
         # Add the formatter to handlers
         self.file_handler.setFormatter(self.formatter)
-        self.console_handler.setFormatter(self.formatter)
         
         # Add handlers to the logger
         if not self.logger.handlers:
             self.logger.addHandler(self.file_handler)
-            self.logger.addHandler(self.console_handler)
+            if console_output:
+                self.console_handler = logging.StreamHandler()
+                self.console_handler.setLevel(level)
+                self.console_handler.setFormatter(self.formatter)
+                self.logger.addHandler(self.console_handler)
 
     def debug(self, msg):
         self.logger.debug(msg)

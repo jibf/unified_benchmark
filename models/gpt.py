@@ -1,21 +1,33 @@
-from typing import Any, Dict
+from typing import Any
 import os
+import sys
 from openai import OpenAI
 import json
-import sys
 import copy
-import os
+from dotenv import load_dotenv
+
+load_dotenv()
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompts.prompts import SimpleTemplatePrompt
 from utils.utils import *
+from collections import defaultdict
 
 
 class GPTModel:
-    def __init__(self, model_name):
+    def __init__(self, model_name, is_user=False):
         super().__init__()
         self.model_name = model_name
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        if is_user:
+            self.client = OpenAI(
+                api_key=os.getenv("API_KEY"),
+                base_url=os.getenv("BASE_URL")
+            )
+        else:
+            self.client = OpenAI(
+                api_key=os.getenv("API_KEY"),
+                base_url=os.getenv("BASE_URL")
+            )
         
 
     def __call__(self, prefix, prompt: SimpleTemplatePrompt, **kwargs: Any):
@@ -36,33 +48,60 @@ class GPTModel:
                 )
             return completion.choices[0].message.content
         except Exception as e:
-            print(f"Exception: {e}")
-            return None
+            error_msg = str(e).lower()
+            if any(keyword in error_msg for keyword in ['context length', 'token limit', 'maximum context', 'too many tokens']):
+                print(f"Context length error: {e}", file=sys.stderr)
+                return {"error_type": "context_length_exceeded", "error_message": str(e)}
+            else:
+                print(f"Exception: {e}", file=sys.stderr)
+                return None
 
 
 class FunctionCallGPT(GPTModel):
     def __init__(self, model_name):
-        super().__init__(None)
-        self.model_name = model_name
+        super().__init__(model_name)
+        
         self.messages = []
 
     @retry(max_attempts=5, delay=10)
     def __call__(self, messages, tools=None, **kwargs: Any):
+        is_claude = ("claude" in self.model_name)
+        is_thinking = ("thinking-on" in self.model_name)
         if "function_call" not in json.dumps(messages, ensure_ascii=False):
             self.messages = copy.deepcopy(messages)
         try:
-            completion = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=self.messages,
-                temperature=0.0,
-                tools=tools,
-                tool_choice="auto",
-                max_tokens=2048
-            )
+            model_name = self.model_name
+            kwargs = {
+                "model": model_name,
+                "messages": self.messages,
+                "tools": tools,
+            }
+
+            if "gpt-5" in model_name:
+                kwargs["tool_choice"] = "auto"
+            elif "gemini" in model_name:
+                pass    # no additional args
+            else:
+                kwargs["temperature"] = 1.0 if is_thinking else 0.0
+                kwargs["tool_choice"]={"type": "auto"} if is_claude else "auto"
+                kwargs["max_tokens"]=16384
+                kwargs["extra_body"]={        
+                        "thinking": {
+                            "type": "enabled",
+                            "budget_tokens": 16384
+                        }
+                    } if is_thinking else None
+
+            completion = self.client.chat.completions.create(**kwargs)
             return completion.choices[0].message
         except Exception as e:
-            print(f"Exception: {e}")
-            return None
+            error_msg = str(e).lower()
+            if any(keyword in error_msg for keyword in ['context length', 'token limit', 'maximum context', 'too many tokens']):
+                print(f"Context length error: {e}", file=sys.stderr)
+                return {"error_type": "context_length_exceeded", "error_message": str(e)}
+            else:
+                print(f"Exception: {e}", file=sys.stderr)
+                return None
 
 
 if __name__ == "__main__":
