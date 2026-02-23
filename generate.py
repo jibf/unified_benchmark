@@ -2,6 +2,8 @@
 import argparse, json, os
 from tqdm import tqdm
 from model_inference.inference_map import inference_map
+from model_inference.apimodel_inference import APIModelInference
+from model_inference.dynamic_apimodel import create_dynamic_apimodel_config
 from category import ACE_DATA_CATEGORY
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -35,7 +37,9 @@ def get_args():
     # Maximum number of dialog turns allowed for agent interactions
     parser.add_argument("--max-dialog-turns", type=int, default=40, help="Maximum number of dialog turns allowed for agent interactions")
     # Model used by the user role in the agent, it is recommended to use an advanced large model
-    parser.add_argument("--user-model", type=str, default="gpt-4o", help="Model used by the user role in the agent")
+    parser.add_argument("--user-model", type=str, default="openai/gpt-4o-20240806", help="Model used by the user role in the agent")
+    # Output directory for results
+    parser.add_argument("--output-dir", type=str, default="./", help="Directory to save results (result_all and score_all will be created here)")
     args = parser.parse_args()
     return args
 
@@ -61,7 +65,11 @@ def sort_json(file):
     with open(file,'r', encoding='utf-8') as f:
         for line in f:
             data.append(json.loads(line))
-    if "multi_turn" in file and "agent" not in file:
+
+    # Extract filename from full path to avoid issues with absolute paths containing "agent"
+    filename = os.path.basename(file)
+
+    if "multi_turn" in filename and "agent" not in filename:
         data = sorted(data, key=lambda x: tuple(map(int, x["id"].split("_")[-2:])))
     else:
         data = sorted(data, key=lambda x: int(x["id"].split("_")[-1]))
@@ -71,9 +79,30 @@ def sort_json(file):
             f.write('\n')  
 
 def generate_singal(args, model_name, test_case):
-    model_path = args.model_path 
+    model_path = args.model_path
     result_path = args.result_path
-    model_inference = inference_map[model_name](model_name, model_path, args.temperature, args.top_p, args.max_tokens, args.max_dialog_turns, args.user_model, args.language)
+
+    # Get the inference handler, with dynamic model support
+    if model_name in inference_map:
+        inference_handler = inference_map[model_name]
+    else:
+        # Check if we have API_KEY and BASE_URL for dynamic model creation
+        api_key = os.getenv("API_KEY")
+        base_url = os.getenv("BASE_URL")
+        if api_key and base_url:
+            print(f"Model {model_name} not found in inference_map, creating dynamic model with API_KEY and BASE_URL")
+            inference_handler = create_dynamic_apimodel_config(model_name, api_key, base_url)
+        else:
+            raise KeyError(f"Model {model_name} not found in inference_map and no API_KEY/BASE_URL provided for dynamic model creation")
+    
+    # Check if it's an API model (APIModelInference) or local model (CommonInference)
+    # Handle both predefined classes and dynamic classes
+    if inference_handler == APIModelInference or (hasattr(inference_handler, '__name__') and 'APIModelInference' in str(inference_handler.__bases__ if hasattr(inference_handler, '__bases__') else [])):
+        # API models (both predefined and dynamic) don't need model_path or tensor_parallel_size parameter
+        model_inference = inference_handler(model_name, temperature=args.temperature, top_p=args.top_p, max_tokens=args.max_tokens, max_dialog_turns=args.max_dialog_turns, user_model=args.user_model, language=args.language)
+    else:
+        # Local models need tensor_parallel_size parameter
+        model_inference = inference_handler(model_name, model_path, args.temperature, args.top_p, args.max_tokens, args.max_dialog_turns, args.user_model, args.language, args.num_gpus)
 
     if "agent" in test_case["id"]:
         id, question, functions = (
@@ -164,9 +193,12 @@ if __name__ == "__main__":
         args.category = [args.category]
 
     
+    # Use output_dir parameter for result paths
+    result_base = os.path.join(args.output_dir, "result_all")
+
     paths = {
-        "zh": {"data_path": "./data_all/data_zh/", "result_path": "./result_all/result_zh/"},
-        "en": {"data_path": "./data_all/data_en/", "result_path": "./result_all/result_en/"},
+        "zh": {"data_path": "./data_all/data_zh/", "result_path": f"{result_base}/result_zh/"},
+        "en": {"data_path": "./data_all/data_en/", "result_path": f"{result_base}/result_en/"},
     }
 
     data_path = paths[args.language]["data_path"]

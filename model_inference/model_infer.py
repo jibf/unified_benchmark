@@ -1,10 +1,14 @@
 
 import os
+import logging
 
 import subprocess
 from openai import OpenAI
 import google.generativeai as genai
-from vllm import LLM, SamplingParams
+try:
+    from vllm import LLM, SamplingParams
+except ImportError:
+    logging.warning("vLLM is not installed. Please install it via `pip install vllm` to use local model inference.")
 import time
 
 
@@ -25,7 +29,7 @@ def get_free_gpu(use_gpu_num):
 
 
 class LLMInfer(object):
-    def __init__(self, model_path, temperature=0.001, top_p=1, max_tokens=1000, language="zh", max_model_len=8192, tensor_parallel_size=1) -> None:
+    def __init__(self, model_path, temperature=0.001, top_p=1, max_tokens=1000, language="zh", max_model_len=32768, tensor_parallel_size=1) -> None:
         gpu_ids = get_free_gpu(use_gpu_num=tensor_parallel_size)
         os.environ["CUDA_VISIBLE_DEVICES"] = gpu_ids
         self.sampling_params = SamplingParams(
@@ -66,7 +70,7 @@ class LLMInfer(object):
 
 
 class Llama(LLMInfer):
-    def __init__(self, model_path, temperature=0.001, top_p=1, max_tokens=1000, language="zh", max_model_len=8192, tensor_parallel_size=2) -> None:
+    def __init__(self, model_path, temperature=0.001, top_p=1, max_tokens=1000, language="zh", max_model_len=32768, tensor_parallel_size=2) -> None:
         super().__init__(model_path, temperature, top_p, max_tokens, language, max_model_len, tensor_parallel_size)
 
 
@@ -170,16 +174,16 @@ class Kimi(object):
 
 
 model_dict = {}
-def get_model(model_name, model_path):
+def get_model(model_name, model_path, tensor_parallel_size=1):
     global model_dict
     if model_name in model_dict:
         model = model_dict[model_name]
     else:
         model_name_lower = model_name.lower()
         if "qwen" in model_name_lower:
-            model = LLMInfer(model_path)
+            model = LLMInfer(model_path, tensor_parallel_size=tensor_parallel_size)
         elif "llama" in model_name_lower:
-            model = Llama(model_path)
+            model = Llama(model_path, tensor_parallel_size=tensor_parallel_size)
         elif "deepseek" in model_name_lower:
             model = Deepseek(model_name)
         elif "gemini" in model_name_lower:
@@ -187,7 +191,7 @@ def get_model(model_name, model_path):
         elif "kimi" in model_name_lower:
             model = Kimi(model_name)
         elif model_path:
-            model = Llama(model_path)
+            model = Llama(model_path, tensor_parallel_size=tensor_parallel_size)
         else:
             raise("Unsupported model")
         model_dict[model_name] = model

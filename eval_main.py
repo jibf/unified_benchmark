@@ -1,3 +1,4 @@
+import os
 import sys
 
 sys.path.append("../")
@@ -28,6 +29,23 @@ def extract_outermost_bracket_content(text):
     return None
 
 
+def extract_qwen_answer(result):
+    """
+    For Qwen models, extract the answer after the </think> tag.
+    If the tag is not present, return the original result.
+    """
+    import re
+    if isinstance(result, str):
+        match = re.search(r'</think>\s*(.*)$', result, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+    return result
+
+
+def is_qwen_or_ds_r1_model(model_name):
+    # You may want to adjust this check for your Qwen model naming conventions
+    return "Qwen" in model_name or "qwen" in model_name or "DeepSeek-R1" in model_name
+
 
 def normal_single_turn_eval(
     model_result, prompt, possible_answer, test_category, model_name, paths
@@ -47,8 +65,11 @@ def normal_single_turn_eval(
         model_result_item = model_result[i]["result"]
         prompt_item = prompt[i]["function"]
         possible_answer_item = possible_answer[i]["ground_truth"]
-        
-        
+
+        # For Qwen models, extract the answer after </think>
+        if is_qwen_or_ds_r1_model(model_name):
+            model_result_item = extract_qwen_answer(model_result_item)
+
         try:
             model_result_item_raw = model_result_item
             model_result_item_raw = extract_outermost_bracket_content(model_result_item_raw)
@@ -161,6 +182,10 @@ def normal_multi_turn_eval(
         model_result_item = model_result[i]["result"]
         prompt_item = prompt[i]["function"]
         possible_answer_item_ = possible_answer[i]["ground_truth"]
+
+        # For Qwen models, extract the answer after </think>
+        if is_qwen_or_ds_r1_model(model_name):
+            model_result_item = extract_qwen_answer(model_result_item)
         
         
         try:
@@ -307,6 +332,11 @@ def special_eval(model_result, prompt, possible_answer, category, model_name, pa
         id = prompt[i]["id"]
         model_result_item = model_result[i]["result"]
         possible_answer_item_ = possible_answer[i]["ground_truth"]
+        
+        # For Qwen models, extract the answer after </think>
+        if is_qwen_or_ds_r1_model(model_name):
+            model_result_item = extract_qwen_answer(model_result_item)
+        
         result.append(
                 {
                     "id": id,
@@ -392,6 +422,10 @@ def agent_eval(model_result, prompt, possible_answer, test_category, model_name)
     for i in range(len(model_result)):
         model_result_item = model_result[i]["result"]
         possible_answer_item_ = possible_answer[i]["ground_truth"]
+        
+        # For Qwen models, extract the answer after </think>
+        if is_qwen_or_ds_r1_model(model_name):
+            model_result_item = extract_qwen_answer(model_result_item)
         
         if type(possible_answer_item_) != list:
             possible_answer_item_ = [possible_answer_item_]
@@ -543,10 +577,7 @@ def agent_eval_process(model_name, model_results, possible_answers, test_categor
     # Calculate the overall accuracy of all entries
     overall_accuracy = total_accuracy / len(model_results)
     overall_accuracy = round(overall_accuracy, 3)  # Keep two decimal places
-    if language == "zh":
-        file_name = "./score_all/score_zh/" + model_name + "/data_" + test_category + "_process.json"
-    elif language == "en":
-        file_name = "./score_all/score_en/" + model_name + "/data_" + test_category + "_process.json"
+    file_name = os.path.join(OUTPUT_PATH, model_name, f"data_{test_category}_process.json")
     # Write individual_accuracies to JSON file line by line
     with open(file_name, 'w', encoding="utf-8") as f:
         for entry in individual_accuracies:
@@ -562,6 +593,13 @@ def agent_eval_process(model_name, model_results, possible_answers, test_categor
 def runner(model_names, categories, paths):
     
     for model_name in model_names: 
+        # Dictionary to store accuracies and sample sizes by major category
+        category_groups = {
+            "normal": {"accuracies": [], "sample_sizes": []},
+            "special": {"accuracies": [], "sample_sizes": []},
+            "agent": {"accuracies": [], "sample_sizes": []}
+        }
+        
         for category in categories:
             print(f"🔍 Running test: {category}")
         
@@ -584,6 +622,8 @@ def runner(model_names, categories, paths):
                     paths,
                 )
                 print(f"Model: {model_name} | ✔️ Test '{category}' is done! 🚀 Accuracy: {accuracy}.")
+                category_groups["special"]["accuracies"].append(accuracy)
+                category_groups["special"]["sample_sizes"].append(len(model_result))
 
             elif "agent" in category:
                 end_accuracy, process_accuracy = agent_eval(
@@ -594,6 +634,8 @@ def runner(model_names, categories, paths):
                     model_name,
                 )
                 print(f"Model: {model_name} | ✔️ Test '{category}' is done! | End_to_End Accuracy: {end_accuracy} | Process Accuracy: {process_accuracy}")
+                category_groups["agent"]["accuracies"].append(end_accuracy)
+                category_groups["agent"]["sample_sizes"].append(len(model_result))
             
             elif "normal_multi_turn" in category:
                 end_accuracy  = normal_multi_turn_eval(
@@ -605,6 +647,8 @@ def runner(model_names, categories, paths):
                     paths,
                 )
                 print(f"Model: {model_name} | ✔️ Test '{category}' is done! | Accuracy: {end_accuracy}")
+                category_groups["normal"]["accuracies"].append(end_accuracy)
+                category_groups["normal"]["sample_sizes"].append(len(model_result))
 
             else:
                 accuracy = normal_single_turn_eval(
@@ -616,25 +660,53 @@ def runner(model_names, categories, paths):
                     paths,
                 )
                 print(f"Model: {model_name} | ✔️ Test '{category}' is done! | Accuracy: {accuracy}")
+                category_groups["normal"]["accuracies"].append(accuracy)
+                category_groups["normal"]["sample_sizes"].append(len(model_result))
 
+        # Calculate weighted total accuracy for each category group
+        print(f"\n{model_name}:")
+        overall_total_weighted_accuracy = 0
+        overall_total_samples = 0
+        for category_type, data in category_groups.items():
+            if data["accuracies"]:
+                # Calculate weighted average based on sample sizes
+                total_weighted_accuracy = 0
+                total_samples = 0
+                for accuracy, sample_size in zip(data["accuracies"], data["sample_sizes"]):
+                    total_weighted_accuracy += accuracy * sample_size
+                    total_samples += sample_size
+
+                weighted_accuracy = round(total_weighted_accuracy / total_samples, 3) if total_samples > 0 else 0
+                print(f"  {category_type}: {weighted_accuracy}")
+
+                # Accumulate for overall accuracy
+                overall_total_weighted_accuracy += total_weighted_accuracy
+                overall_total_samples += total_samples
+
+        # Calculate and print overall accuracy across all tasks and categories
+        overall_accuracy = round(overall_total_weighted_accuracy / overall_total_samples, 3) if overall_total_samples > 0 else 0
+        print(f"  overall: {overall_accuracy}\n")
       
     update_result_table_with_score_file(RESULT_TABLE, OUTPUT_PATH)
     generate_result_csv(RESULT_TABLE, OUTPUT_PATH)
 
 
-def get_paths(language):
+def get_paths(language, output_dir="./"):
+    result_base = os.path.join(output_dir, "result_all")
+    score_base = os.path.join(output_dir, "score_all")
+
     base_paths = {
         "zh": {
-            "INPUT_PATH": "./result_all/result_zh/",
+            "INPUT_PATH": f"{result_base}/result_zh/",
             "PROMPT_PATH": "./data_all/data_zh/",
             "POSSIBLE_ANSWER_PATH": "./data_all/data_zh/possible_answer/",
-            "OUTPUT_PATH": "./score_all/score_zh/"
+            "OUTPUT_PATH": f"{score_base}/score_zh/"
         },
         "en": {
-            "INPUT_PATH": "./result_all/result_en/",
+            "INPUT_PATH": f"{result_base}/result_en/",
             "PROMPT_PATH": "./data_all/data_en/",
             "POSSIBLE_ANSWER_PATH": "./data_all/data_en/possible_answer/",
-            "OUTPUT_PATH": "./score_all/score_en/"
+            "OUTPUT_PATH": f"{score_base}/score_en/"
         }
     }
     return base_paths.get(language)
@@ -655,10 +727,16 @@ if __name__ == "__main__":
         type=str,
         help="A list of test categories to run the evaluation on",
     )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="./",
+        help="Directory containing result_all and where score_all will be created",
+    )
 
     args = parser.parse_args()
 
-    paths = get_paths(args.language)
+    paths = get_paths(args.language, args.output_dir)
 
     if paths:
         INPUT_PATH = paths["INPUT_PATH"]
@@ -675,7 +753,9 @@ if __name__ == "__main__":
     ]
 
     # Extract and normalize model names
-    model_names = [model_name.replace("/", "_") for model_name in (args.model or [])]
+    # model_names = [model_name.replace("/", "_") for model_name in (args.model or [])]
+    # Update: to fit the Multi API model name format
+    model_names = [model_name for model_name in (args.model or [])]
 
     # Get language
     language = args.language
@@ -685,5 +765,4 @@ if __name__ == "__main__":
     
     print(f"Models being evaluated: {model_names}")
     print(f"Test categories being used: {test_categories}")
-
 
