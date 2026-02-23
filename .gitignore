@@ -1,0 +1,10 @@
+**/__pycache__/
+**/*.pyc
+.vscode
+pipeline.log
+.env
+results/
+benchmark/
+pipeline_results/
+filtered_datasets/
+sgl-eval-peterhj-genserver/
