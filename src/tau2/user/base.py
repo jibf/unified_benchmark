@@ -61,6 +61,7 @@ class UserState(BaseModel):
                         content=message.content,
                     )
                 )
+                # print(f"inst UserMessage flipped: {message.content}")
             elif isinstance(message, AssistantMessage):
                 if not message.is_tool_call():
                     # Only add non tool call messages
@@ -70,6 +71,7 @@ class UserState(BaseModel):
                             content=message.content,
                         )
                     )
+                    # print(f"inst AssistantMessage flipped: {message.content}")
                 else:
                     raise ValueError(
                         f"Tool calls are not supported in the flipped messages: {message}"

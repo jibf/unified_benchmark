@@ -383,9 +383,12 @@ class Orchestrator:
                     f"{self.from_role.value} can only send tool calls. {self.message}"
                 )
 
-    def run(self) -> SimulationRun:
+    def run(self, progress_bar=None) -> SimulationRun:
         """
         Run the simulation.
+
+        Args:
+            progress_bar: Optional progress bar for step tracking
 
         Returns:
             SimulationRun: The simulation run.
@@ -393,11 +396,25 @@ class Orchestrator:
         start_time = get_now()
         start = time.perf_counter()
         self.initialize()
+        
+        # Initialize progress bar if provided
+        if progress_bar is not None:
+            progress_bar.reset(total=self.max_steps)
+            progress_bar.set_description(f"Task {self.task.id}")
+        
         while not self.done:
             self.step()
             # Checking for maximum steps and errors only if the last message is not to the environment
             if self.to_role == Role.ENV:
                 continue
+            # Update progress bar if provided
+            if progress_bar is not None:
+                progress_bar.update(1)
+                progress_bar.set_postfix({
+                    'step': self.step_count,
+                    'errors': self.num_errors,
+                    'done': self.done
+                })
             if self.step_count >= self.max_steps and self.to_role != Role.ENV:
                 self.done = True
                 self.termination_reason = TerminationReason.MAX_STEPS
@@ -422,6 +439,10 @@ class Orchestrator:
             )
         self.agent.stop(last_msg_to_agent, self.agent_state)
         self.user.stop(last_msg_to_user, self.user_state)
+        
+        # Close progress bar if provided
+        if progress_bar is not None:
+            progress_bar.close()
 
         # Wrap up the simulation
         duration = time.perf_counter() - start

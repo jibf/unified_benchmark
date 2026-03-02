@@ -13,7 +13,7 @@ from tau2.utils.llm_utils import generate
 
 @pytest.fixture
 def model() -> str:
-    return "gpt-4o-mini"
+    return "openai/gpt-4o-mini"
 
 
 @pytest.fixture

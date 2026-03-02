@@ -167,6 +167,13 @@ class RunConfig(BaseModel):
             default=False,
         ),
     ]
+    base_url: Annotated[
+        Optional[str],
+        Field(
+            description="Base URL for custom API endpoints (for huggingface models)",
+            default=None,
+        ),
+    ]
 
     def validate(self) -> None:
         """

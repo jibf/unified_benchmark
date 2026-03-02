@@ -1,11 +1,15 @@
 import json
 import multiprocessing
 import random
+import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
+from copy import deepcopy
 
 from loguru import logger
+from tqdm import tqdm
 
 from tau2.agent.llm_agent import LLMAgent, LLMGTAgent, LLMSoloAgent
 from tau2.data_model.simulation import (
@@ -99,7 +103,11 @@ def make_run_name(config: RunConfig) -> str:
     """
     Make a run name from the run config
     """
-    clean_llm_agent_name = [x for x in config.llm_agent.split("/") if x][-1]
+    clean_llm_agent_name = config.llm_agent.split("/")[-1]
+    if "huggingface" in config.llm_agent:
+        for n in config.llm_agent.split("/"):
+            if "Qwen" in n:
+                clean_llm_agent_name = n
     agent_name = f"{config.agent}_{clean_llm_agent_name}"
 
     clean_llm_user_name = [x for x in config.llm_user.split("/") if x][-1]
@@ -167,6 +175,7 @@ def run_domain(config: RunConfig) -> Results:
         seed=config.seed,
         log_level=config.log_level,
         enforce_communication_protocol=config.enforce_communication_protocol,
+        base_url=config.base_url,
     )
     metrics = compute_metrics(simulation_results)
     ConsoleDisplay.display_agent_metrics(metrics)
@@ -193,6 +202,7 @@ def run_tasks(
     seed: Optional[int] = 300,
     log_level: Optional[str] = "INFO",
     enforce_communication_protocol: bool = False,
+    base_url: Optional[str] = None,
 ) -> Results:
     """
     Runs tasks for a given domain.
@@ -368,6 +378,8 @@ def run_tasks(
                 evaluation_type=evaluation_type,
                 seed=seed,
                 enforce_communication_protocol=enforce_communication_protocol,
+                max_concurrency=max_concurrency,
+                base_url=base_url,
             )
             simulation.trial = trial
             if console_display:
@@ -378,6 +390,23 @@ def run_tasks(
             raise e
         return simulation
 
+    # Calculate total tasks to run
+    total_tasks = len(tasks) * num_trials - len(done_runs)
+    if total_tasks <= 0:
+        ConsoleDisplay.console.print("✨ [bold green]All tasks already completed![/bold green]")
+        return simulation_results
+    
+    # Start overall progress tracking
+    overall_start_time = time.time()
+    overall_pbar = tqdm(
+        total=total_tasks,
+        desc="Overall Progress",
+        unit="task",
+        position=0,
+        leave=True,
+        ncols=100
+    )
+    
     args = []
     for trial in range(num_trials):
         for i, task in enumerate(tasks):
@@ -391,9 +420,83 @@ def run_tasks(
             progress_str = f"{i}/{len(tasks)} (trial {trial + 1}/{num_trials})"
             args.append((task, trial, seeds[trial], progress_str))
 
+    def _run_with_progress(task: Task, trial: int, seed: int, progress_str: str) -> SimulationRun:
+        task_start_time = time.time()
+        
+        console_text = Text(text=f"{progress_str}. Running task {task.id}, trial {trial + 1}", style="bold green")
+        ConsoleDisplay.console.print(console_text)
+        
+        # try:
+        simulation = run_task(
+            domain=domain,
+            task=task,
+            agent=agent,
+            user=user,
+            llm_agent=llm_agent,
+            llm_args_agent=llm_args_agent,
+            llm_user=llm_user,
+            llm_args_user=llm_args_user,
+            max_steps=max_steps,
+            max_errors=max_errors,
+            evaluation_type=evaluation_type,
+            seed=seed,
+            max_concurrency=max_concurrency,
+            base_url=base_url,
+        )
+        simulation.trial = trial
+        if console_display:
+            ConsoleDisplay.display_simulation(simulation, show_details=False)
+        _save(simulation)
+        
+        # Update progress and timing
+        task_duration = time.time() - task_start_time
+        overall_pbar.update(1)
+        
+        # Calculate and display ETA
+        elapsed_time = time.time() - overall_start_time
+        completed_tasks = overall_pbar.n
+        if completed_tasks > 0:
+            avg_time_per_task = elapsed_time / completed_tasks
+            remaining_tasks = total_tasks - completed_tasks
+            eta_seconds = avg_time_per_task * remaining_tasks
+            eta_str = str(timedelta(seconds=int(eta_seconds)))
+            
+            # Update progress bar description with ETA
+            overall_pbar.set_description(
+                f"Overall Progress (ETA: {eta_str})"
+            )
+        
+        # Display task completion info
+        print(
+            "✅" if simulation.reward_info and simulation.reward_info.reward == 1.0 else "❌",
+            f"task_id={task.id}",
+            f"(trial {trial + 1}/{num_trials})",
+            f"[{task_duration:.1f}s]",
+            f"reward={simulation.reward_info.reward if simulation.reward_info else 'N/A'}"
+        )
+        print("-----")
+            
+        # except Exception as e:
+        #     logger.error(f"Error running task {task.id}, trial {trial}: {e}")
+        #     overall_pbar.update(1)
+        #     raise e
+        
+        return simulation
+
     with ThreadPoolExecutor(max_workers=max_concurrency) as executor:
-        res = list(executor.map(_run, *zip(*args)))
+        res = list(executor.map(_run_with_progress, *zip(*args)))
         simulation_results.simulations.extend(res)
+    
+    overall_pbar.close()
+    
+    # Display final timing information
+    total_duration = time.time() - overall_start_time
+    avg_time_per_task = total_duration / total_tasks if total_tasks > 0 else 0
+    
+    print(f"\n⏱️  Total execution time: {timedelta(seconds=int(total_duration))}")
+    print(f"📊 Average time per task: {avg_time_per_task:.1f} seconds")
+    print(f"🚀 Tasks per second: {total_tasks / total_duration:.2f}")
+    
     ConsoleDisplay.console.print(
         "\n✨ [bold green]Successfully completed all simulations![/bold green]\n"
         "To review the simulations, run: [bold blue]tau2 view[/bold blue]"
@@ -415,6 +518,8 @@ def run_task(
     evaluation_type: EvaluationType = EvaluationType.ALL,
     seed: Optional[int] = None,
     enforce_communication_protocol: bool = False,
+    max_concurrency: int = 1,
+    base_url: Optional[str] = None,
 ) -> SimulationRun:
     """
     Runs tasks for a given domain.
@@ -452,29 +557,41 @@ def run_task(
 
     solo_mode = False
     if issubclass(AgentConstructor, LLMAgent):
+        # Add base_url to llm_args if provided
+        agent_llm_args = deepcopy(llm_args_agent) if llm_args_agent is not None else {}
+        if base_url is not None:
+            agent_llm_args["base_url"] = base_url
         agent = AgentConstructor(
             tools=environment.get_tools(),
             domain_policy=environment.get_policy(),
             llm=llm_agent,
-            llm_args=llm_args_agent,
+            llm_args=agent_llm_args,
         )
     elif issubclass(AgentConstructor, LLMGTAgent):
+        # Add base_url to llm_args if provided
+        agent_llm_args = deepcopy(llm_args_agent) if llm_args_agent is not None else {}
+        if base_url is not None:
+            agent_llm_args["base_url"] = base_url
         agent = AgentConstructor(
             tools=environment.get_tools(),
             domain_policy=environment.get_policy(),
             llm=llm_agent,
-            llm_args=llm_args_agent,
+            llm_args=agent_llm_args,
             task=task,
         )
     elif issubclass(AgentConstructor, LLMSoloAgent):
         solo_mode = True
         environment: Environment = environment_constructor(solo_mode=True)
         user_tools = environment.get_user_tools() if environment.user_tools else []
+        # Add base_url to llm_args if provided
+        agent_llm_args = deepcopy(llm_args_agent) if llm_args_agent is not None else {}
+        if base_url is not None:
+            agent_llm_args["base_url"] = base_url
         agent = AgentConstructor(
             tools=environment.get_tools() + user_tools,
             domain_policy=environment.get_policy(),
             llm=llm_agent,
-            llm_args=llm_args_agent,
+            llm_args=agent_llm_args,
             task=task,
         )
     elif issubclass(AgentConstructor, GymAgent):
@@ -497,11 +614,16 @@ def run_task(
             agent, LLMSoloAgent
         ), "Dummy user can only be used with solo agent"
 
+    # Add base_url to user llm_args if provided
+    user_llm_args = deepcopy(llm_args_user) if llm_args_user is not None else {}
+    if base_url is not None:
+        user_llm_args["base_url"] = base_url
+
     user = UserConstructor(
         tools=user_tools,
         instructions=str(task.user_scenario),
         llm=llm_user,
-        llm_args=llm_args_user,
+        llm_args=user_llm_args,
     )
 
     orchestrator = Orchestrator(
@@ -516,7 +638,20 @@ def run_task(
         solo_mode=solo_mode,
         validate_communication=enforce_communication_protocol,
     )
-    simulation = orchestrator.run()
+    
+    # Create progress bar for individual task if concurrency is low
+    progress_bar = None
+    if max_concurrency <= 2:  # Only show detailed progress for low concurrency
+        progress_bar = tqdm(
+            total=max_steps,
+            desc=f"Task {task.id}",
+            unit="step",
+            position=2,
+            leave=False,
+            ncols=100
+        )
+    
+    simulation = orchestrator.run(progress_bar=progress_bar)
 
     reward_info = evaluate_simulation(
         domain=domain,
