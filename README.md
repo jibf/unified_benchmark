@@ -77,6 +77,41 @@ python run.py --agent-strategy tool-calling --env retail --model gpt-4o --model-
 
 This command will run only the tasks with IDs 2, 4, and 6.
 
+## Progress Tracking
+
+Tau-bench now includes comprehensive progress tracking to help you monitor benchmark execution and estimate completion times. The system provides:
+
+- **Multi-level progress bars**: Overall progress, trial progress, and individual task progress
+- **Real-time ETA**: Estimated time to completion based on current progress
+- **Performance metrics**: Average time per task and throughput statistics
+- **Action tracking**: Real-time display of current actions and rewards
+
+### Example Progress Display
+
+```
+Overall Progress (ETA: 0:15:30): 45%|████▌     | 9/20 [02:30<03:05, 12.5s/task]
+Trial 1/2: 100%|██████████| 3/3 [00:45<00:00, 15.0s/task]
+Task 2: 67%|██████▋   | 20/30 [00:12<00:06, action=search_products, reward=0.00, done=False]
+```
+
+### Usage
+
+Progress tracking is automatically enabled. For the best experience with detailed progress:
+
+```bash
+python run.py --agent-strategy tool-calling --env retail --model gpt-4o --model-provider openai --user-model gpt-4o --user-model-provider openai --user-strategy llm --max-concurrency 2
+```
+
+Use lower concurrency (1-2) for detailed task-level progress, or higher concurrency (5+) for overall progress focus.
+
+For a demonstration of all progress tracking features, run:
+
+```bash
+python example_progress_tracking.py
+```
+
+See [PROGRESS_TRACKING.md](PROGRESS_TRACKING.md) for detailed documentation.
+
 ## User simulators
 
 By default, we use `gpt-4o` as the user simulator with strategy `llm`. You can use other models by setting the `--user-model` flag, or other strategies by setting the `--user-strategy` flag. For example, run a tool-calling agent with a claude user simulator:

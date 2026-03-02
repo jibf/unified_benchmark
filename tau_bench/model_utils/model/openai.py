@@ -6,18 +6,21 @@ from tau_bench.model_utils.model.completion import approx_cost_for_datapoint, ap
 from tau_bench.model_utils.model.general_model import wrap_temperature
 from tau_bench.model_utils.model.utils import approx_num_tokens
 
-DEFAULT_OPENAI_MODEL = "gpt-4o-2024-08-06"
-API_KEY_ENV_VAR = "OPENAI_API_KEY"
+DEFAULT_OPENAI_MODEL = "openai/gpt-4o-mini"
+API_KEY_ENV_VAR = "API_KEY"
 
 PRICE_PER_INPUT_TOKEN_MAP = {
     "gpt-4o-2024-08-06": 2.5 / 1000000,
     "gpt-4o": 5 / 1000000,
     "gpt-4o-2024-08-06": 2.5 / 1000000,
+    "openai/gpt-4o-20240806": 2.5 / 1000000,
+    "openai/gpt-4.1": 10 / 1000000,
     "gpt-4o-2024-05-13": 5 / 1000000,
     "gpt-4-turbo": 10 / 1000000,
     "gpt-4-turbo-2024-04-09": 10 / 1000000,
     "gpt-4": 30 / 1000000,
     "gpt-4o-mini": 0.15 / 1000000,
+    "openai/gpt-4o-mini": 0.15 / 1000000,
     "gpt-4o-mini-2024-07-18": 0.15 / 1000000,
     "gpt-3.5-turbo": 0.5 / 1000000,
     "gpt-3.5-turbo-0125": 0.5 / 1000000,
@@ -29,11 +32,14 @@ CAPABILITY_SCORE_MAP = {
     "gpt-4o-2024-08-06": 0.8,
     "gpt-4o": 0.8,
     "gpt-4o-2024-08-06": 0.8,
+    "openai/gpt-4o-20240806": 0.8,
     "gpt-4o-2024-05-13": 0.8,
     "gpt-4-turbo": 0.9,
     "gpt-4-turbo-2024-04-09": 0.9,
     "gpt-4": 0.8,
+    "openai/gpt-4.1": 0.8,
     "gpt-4o-mini": 0.5,
+    "openai/gpt-4o-mini": 0.5,
     "gpt-4o-mini-2024-07-18": 0.5,
     "gpt-3.5-turbo": 0.3,
     "gpt-3.5-turbo-0125": 0.3,
@@ -49,11 +55,14 @@ MAX_CONTEXT_LENGTH_MAP = {
     "gpt-4o-2024-08-06": 128000,
     "gpt-4o": 128000,
     "gpt-4o-2024-08-06": 128000,
+    "openai/gpt-4o-20240806": 128000,
+    "openai/gpt-4.1": 128000,
     "gpt-4o-2024-05-13": 128000,
     "gpt-4-turbo": 128000,
     "gpt-4-turbo-2024-04-09": 128000,
     "gpt-4": 8192,
     "gpt-4o-mini": 128000,
+    "openai/gpt-4o-mini": 128000,
     "gpt-4o-mini-2024-07-18": 128000,
     "gpt-3.5-turbo": 16385,
     "gpt-3.5-turbo-0125": 16385,
@@ -67,6 +76,7 @@ class OpenAIModel(ChatModel):
         model: str | None = None,
         api_key: str | None = None,
         temperature: float = 0.0,
+        base_url: str | None = None,
     ) -> None:
         from openai import AsyncOpenAI, OpenAI
 
@@ -75,13 +85,24 @@ class OpenAIModel(ChatModel):
         else:
             self.model = model
 
-        api_key = None
+        # Support custom API setup
         if api_key is None:
             api_key = os.getenv(API_KEY_ENV_VAR)
             if api_key is None:
                 raise ValueError(f"{API_KEY_ENV_VAR} environment variable is not set")
-        self.client = OpenAI(api_key=api_key)
-        self.async_client = AsyncOpenAI(api_key=api_key)
+        
+        # Support custom base URL for custom API endpoints
+        if base_url is None:
+            base_url = os.getenv("OPENAI_API_BASE")
+        
+        # Initialize client with custom base URL if provided
+        if base_url:
+            self.client = OpenAI(api_key=api_key, base_url=base_url)
+            self.async_client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+        else:
+            self.client = OpenAI(api_key=api_key)
+            self.async_client = AsyncOpenAI(api_key=api_key)
+        
         self.temperature = temperature
 
     def generate_message(
@@ -98,6 +119,7 @@ class OpenAIModel(ChatModel):
             messages=msgs,
             temperature=wrap_temperature(temperature),
             response_format={"type": "json_object" if force_json else "text"},
+            max_tokens=4096,  # Add max_tokens parameter
         )
         return self.handle_generate_message_response(
             prompt=msgs, content=res.choices[0].message.content, force_json=force_json

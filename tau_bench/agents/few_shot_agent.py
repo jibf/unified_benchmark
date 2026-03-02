@@ -33,7 +33,7 @@ class FewShotToolCallingAgent(Agent):
         self.temperature = temperature
         self.num_few_shots = num_few_shots
     def solve(
-        self, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30
+        self, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30, progress_bar=None
     ) -> SolveResult:
         sampled_few_shot_displays = random.sample(self.few_shot_displays, self.num_few_shots)
         few_shots = "\n\n".join([f"Example {i+1}:\n{display}" for i, display in enumerate(sampled_few_shot_displays)])
@@ -46,7 +46,7 @@ class FewShotToolCallingAgent(Agent):
             {"role": "system", "content": f"{self.wiki}\n\n{few_shots}"},
             {"role": "user", "content": obs},
         ]
-        for _ in range(max_num_steps):
+        for step in range(max_num_steps):
             res = completion(
                 messages=messages,
                 model=self.model,
@@ -60,6 +60,16 @@ class FewShotToolCallingAgent(Agent):
             env_response = env.step(action)
             reward = env_response.reward
             info = {**info, **env_response.info.model_dump()}
+            
+            # Update progress bar if provided
+            if progress_bar is not None:
+                progress_bar.update(1)
+                progress_bar.set_postfix({
+                    'action': action.name,
+                    'reward': f"{reward:.2f}",
+                    'done': env_response.done
+                })
+            
             if action.name != RESPOND_ACTION_NAME:
                 next_message["tool_calls"] = next_message["tool_calls"][:1]
                 messages.extend(

@@ -59,7 +59,7 @@ class ChatReActAgent(Agent):
         return message.model_dump(), action, res._hidden_params["response_cost"]
 
     def solve(
-        self, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30
+        self, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30, progress_bar=None
     ) -> SolveResult:
         response = env.reset(task_index=task_index)
         reward = 0.0
@@ -69,12 +69,22 @@ class ChatReActAgent(Agent):
         ]
         total_cost = 0.0
         info = {}
-        for _ in range(max_num_steps):
+        for step in range(max_num_steps):
             message, action, cost = self.generate_next_step(messages)
             response = env.step(action)
             obs = response.observation
             reward = response.reward
             info = {**info, **response.info.model_dump()}
+            
+            # Update progress bar if provided
+            if progress_bar is not None:
+                progress_bar.update(1)
+                progress_bar.set_postfix({
+                    'action': action.name,
+                    'reward': f"{reward:.2f}",
+                    'done': response.done
+                })
+            
             if action.name != RESPOND_ACTION_NAME:
                 obs = "API output: " + obs
             messages.extend(

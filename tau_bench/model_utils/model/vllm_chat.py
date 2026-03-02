@@ -9,6 +9,8 @@ PRICE_PER_INPUT_TOKEN_MAP = {
     "Qwen/Qwen2-1.5B-Instruct": 0.0,
     "Qwen/Qwen2-7B-Instruct": 0.0,
     "Qwen/Qwen2-72B-Instruct": 0.0,
+    "Qwen/Qwen3-8B": 0.0,
+    "Qwen/Qwen3-32B": 0.0,
     "meta-llama/Meta-Llama-3.1-8B-Instruct": 0.0,
     "sierra-research/Meta-Llama-3.1-8B-Instruct": 0.0,
     "meta-llama/Meta-Llama-3.1-70B-Instruct": 0.0,
@@ -22,6 +24,8 @@ CAPABILITY_SCORE_MAP = {
     "Qwen/Qwen2-1.5B-Instruct": 0.07,
     "Qwen/Qwen2-7B-Instruct": 0.2,
     "Qwen/Qwen2-72B-Instruct": 0.4,
+    "Qwen/Qwen3-8B": 0.75,
+    "Qwen/Qwen3-32B": 0.8,
     "meta-llama/Meta-Llama-3.1-8B-Instruct": 0.3,
     "sierra-research/Meta-Llama-3.1-8B-Instruct": 0.3,
     "meta-llama/Meta-Llama-3.1-70B-Instruct": 0.4,
@@ -39,6 +43,9 @@ MAX_CONTEXT_LENGTH_MAP = {
     "Qwen/Qwen2-1.5B-Instruct": 32768,
     "Qwen/Qwen2-7B-Instruct": 131072,
     "Qwen/Qwen2-72B-Instruct": 131072,
+    "Qwen/Qwen3-8B": 32768,
+    "Qwen/Qwen3-32B": 32768,
+
     "meta-llama/Meta-Llama-3.1-8B-Instruct": 128000,
     "sierra-research/Meta-Llama-3.1-8B-Instruct": 128000,
     "meta-llama/Meta-Llama-3.1-70B-Instruct": 128000,
@@ -120,6 +127,7 @@ class VLLMChatModel(ChatModel):
             model=self.model,
             messages=msgs,
             temperature=wrap_temperature(temperature=temperature),
+            max_tokens=4096,  # Add max_tokens parameter
         )
         return self.handle_generate_message_response(
             prompt=msgs, content=res.choices[0].message.content, force_json=force_json
